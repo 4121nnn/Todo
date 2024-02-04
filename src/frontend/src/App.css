@@ -1,0 +1,32 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+
+}
+ul {
+  display: block;
+  list-style-type: none;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+  padding-inline-start: 0px;
+}
+
+li{
+  list-style-type: none;
+}
+input[type="checkbox" ] {
+  
+  margin: 0px 3px 0px 0px;
+}
+
+.other-functions{
+  color: rgb(75,75,75);
+  font-size: 12px;
+}
+.completed{
+  color: rgb(104, 104, 104);
+  text-decoration: line-through;
+}
