@@ -1,23 +1,22 @@
 package com.nnn.Todo.service;
 
-import com.nnn.Todo.dto.TaskDTO;
-import org.springframework.stereotype.Service;
+import com.nnn.Todo.model.Task;
 
 import java.util.List;
 
 
 public interface TodoService {
 
-    List<TaskDTO> findAll();
+    List<Task> findAll();
 
-    TaskDTO getTaskById(Long id);
+    Task getTaskById(Long id);
 
-    TaskDTO createTask(TaskDTO taskDTO);
+    Task createTask(Task task);
 
     void markCompleted(Long id);
 
     void deleteTask(Long id);
 
 
-    TaskDTO updateTask(TaskDTO task);
+    Task updateTask(Task task);
 }

@@ -1,8 +1,5 @@
 package com.nnn.Todo.service.impl;
 
-import com.nnn.Todo.dto.TaskDTO;
-import com.nnn.Todo.exception.ResourceNotFoundException;
-import com.nnn.Todo.mapper.Mapper;
 import com.nnn.Todo.model.Task;
 import com.nnn.Todo.repository.TodoRepository;
 import com.nnn.Todo.service.TodoService;
@@ -10,39 +7,36 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class TodoServiceImpl implements TodoService {
     TodoRepository todoRepo;
     @Override
-    public List<TaskDTO> findAll() {
-        return todoRepo.findAll().stream()
-                .map(Mapper::toTaskDTO)
-                .collect(Collectors.toList());
+    public List<Task> findAll() {
+        List<Task> tasks =  todoRepo.findAll();
+        Collections.sort(tasks, (a, b) ->  Boolean.compare(a.getCompleted(), b.getCompleted()));
+        return tasks;
     }
 
     @Override
-    public TaskDTO getTaskById(Long id) {
-        return Mapper.toTaskDTO(todoRepo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task doesn't exists by id: " + id)));
+    public Task getTaskById(Long id) {
+        return todoRepo.findById(id).orElseThrow();
     }
 
     @Override
-    public TaskDTO createTask(TaskDTO taskDTO) {
-        taskDTO.prePersist();
-        Task createdTask = todoRepo.save(Mapper.toTask(taskDTO));
-        return Mapper.toTaskDTO(createdTask);
-
+    public Task createTask(Task task) {
+        task.setCompleted(false);
+        task.setCreatedDate(LocalDateTime.now());
+        return todoRepo.save(task);
     }
 
     @Override
     public void markCompleted(Long id) {
         Task task = todoRepo.findById(id)
-                .orElseThrow( () -> new ResourceNotFoundException("Task doesn't exists by id: " + id) );
+                .orElseThrow( () -> new RuntimeException("Task doesn't exists by id: " + id) );
         boolean isCompleted = task.getCompleted();
         task.setCompleted(!isCompleted);
 
@@ -61,12 +55,12 @@ public class TodoServiceImpl implements TodoService {
     }
 
     @Override
-    public TaskDTO updateTask(TaskDTO taskDTO) {
-        Task task = todoRepo.findById(taskDTO.getId())
-                .orElseThrow( () -> new ResourceNotFoundException("Task doesn't exists by id: " + taskDTO.getId()) );
-        task.setTask(taskDTO.getTask());
-        Task updatedTask = todoRepo.save(task);
-        return Mapper.toTaskDTO(updatedTask);
+    public Task updateTask(Task task) {
+        Task taskFromRepo = todoRepo.findById(task.getId())
+                .orElseThrow( () -> new RuntimeException("Task doesn't exists by id: " + task.getId()) );
+        taskFromRepo.setTask(task.getTask());
+        return todoRepo.save(taskFromRepo);
+
     }
 
 

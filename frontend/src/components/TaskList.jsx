@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import TinyPopupMenu from 'tiny-popup-menu';
 import AddTask from './AddTask';
 
 function TaskList() {
     const [tasks, setTasks] = useState([]);
+    const BASE_URL = `http://${import.meta.env.VITE_SERVER_IP}:${import.meta.env.VITE_SERVER_PORT}/api/tasks`;
+
     useEffect(() => {
         const fetchTasks = async () => {
             try{
-                const response = await axios.get('http://localhost:8080/api/tasks');
+                const response = await axios.get(BASE_URL);
                 setTasks(response.data);
 
             }catch(error){
@@ -28,13 +29,12 @@ function TaskList() {
       
         // Send a POST request to the backend API to persist the change
         axios
-          .post(`http://localhost:8080/api/tasks/${taskId}`)
+           .post(`${BASE_URL}/${taskId}`)
           .then(() => {
             console.log('Task completion updated successfully!');
           })
           .catch((error) => {
             console.error('Error updating task completion:', error);
-            // Optionally, handle the error by displaying a user-friendly message
           });
       }
 
@@ -45,7 +45,7 @@ function TaskList() {
         const buttonClickHandle = (taskId) => {
             // Send a DELETE request to the backend API to delete the task
             axios
-                .delete(`http://localhost:8080/api/tasks/${taskId}`)
+                .delete(`${BASE_URL}/${taskId}`)
                 .then(() => {
                     console.log('Task deleted successfully!');
                     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
@@ -76,10 +76,12 @@ function TaskList() {
                             className={task.completed ? 'checked' : ''}
                         />
                         {task.task}
+                        <span className='date'> {task.createdDate} </span>
                     </label>
                     <button onClick={() => buttonClickHandle(task.id)} className="settings-btn other-functions">
                         <i className="fas fa-trash"></i>  
                     </button>
+                    
                 </li>
                 
             ))}

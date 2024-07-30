@@ -11,9 +11,14 @@ function AddTask({ onTaskAdded }) {
     
     const handleSumbit = async (e) => {
         e.preventDefault();
-
+        const BASE_URL = `http://${import.meta.env.VITE_SERVER_IP}:${import.meta.env.VITE_SERVER_PORT}/api/tasks`;
+        if (!task.trim()) {  // Check if the task is empty or contains only whitespace
+            console.error('Task cannot be empty');
+            return;  // Exit the function if the task is empty
+        }
+        
         try{
-            const response = await axios.post('http://localhost:8080/api/tasks', {
+            const response = await axios.post(BASE_URL, {
                 task: task
             });
             console.log('task added');
@@ -33,7 +38,7 @@ function AddTask({ onTaskAdded }) {
                 type="text" 
                 value={ task }
                 onChange={ handleInputChange }
-                placeholder='task'    
+                placeholder='add task'    
             />
 
             <button type="submit">add</button>

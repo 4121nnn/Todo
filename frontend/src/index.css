@@ -34,12 +34,12 @@ h1 {
 }
 
 button {
-  border: 0px solid transparent;
+  border: 1px solid #858585;
   border-radius: 10px;
   background-color: transparent;
   cursor: pointer;
   transition: border-color 0.25s;
-  margin-left: 10px;
+
   
 }
 button:hover {

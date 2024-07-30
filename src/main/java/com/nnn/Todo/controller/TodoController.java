@@ -1,13 +1,13 @@
 package com.nnn.Todo.controller;
 
-import com.nnn.Todo.dto.TaskDTO;
+import com.nnn.Todo.model.Task;
 import com.nnn.Todo.service.TodoService;
-import jakarta.persistence.Entity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -20,22 +20,22 @@ public class TodoController {
 
 
     @GetMapping
-    public ResponseEntity<List<TaskDTO>> getAllTasks(){
-        List<TaskDTO> todoDTOs = todoService.findAll();
+    public ResponseEntity<List<Task>> getAllTasks(){
+        List<Task> todoDTOs = todoService.findAll();
 
         return ResponseEntity.ok(todoDTOs);
     }
 
     @PostMapping
-    public ResponseEntity<TaskDTO> createTask(@RequestBody TaskDTO taskDTO){
-        TaskDTO createdTask = todoService.createTask(taskDTO);
+    public ResponseEntity<Task> createTask(@RequestBody Task task){
+        Task createdTask = todoService.createTask(task);
         return ResponseEntity.ok(createdTask);
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<TaskDTO> getById(@PathVariable Long id){
-        TaskDTO taskDTO = todoService.getTaskById(id);
-        return ResponseEntity.ok(taskDTO);
+    public ResponseEntity<Task> getById(@PathVariable Long id){
+        Task task = todoService.getTaskById(id);
+        return ResponseEntity.ok(task);
     }
 
     @PostMapping("{id}")
@@ -48,8 +48,8 @@ public class TodoController {
         todoService.deleteTask(id);
     }
     @PostMapping("/update")
-    public ResponseEntity<TaskDTO> updateTask(@RequestBody TaskDTO task){
-        TaskDTO updatedTask = todoService.updateTask(task);
+    public ResponseEntity<Task> updateTask(@RequestBody Task task){
+        Task updatedTask = todoService.updateTask(task);
         return ResponseEntity.ok(task);
     }
 
