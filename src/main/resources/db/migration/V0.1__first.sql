@@ -1,0 +1,9 @@
+CREATE SCHEMA IF NOT EXISTS todo;
+
+CREATE TABLE IF NOT EXISTS todo.tasks (
+    id SERIAL PRIMARY KEY,
+    task VARCHAR(255) NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_date TIMESTAMP NOT NULL,
+    completed_date TIMESTAMP NOT NULL
+);

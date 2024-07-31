@@ -9,11 +9,12 @@ spring:
     url: jdbc:postgresql://${DB.HOST}:${DB.PORT}/${DB.NAME}
     username: ${DB.USERNAME}
     password: ${DB.PASSWORD}
-
+    platform: postgres
+    initialization-mode: always
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
