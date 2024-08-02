@@ -24,16 +24,17 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotBlank(message = "Description cannot be blank")
-    @Size(max = 50, message = "Description length must not exceed 50 characters")
+    @NotBlank(message = "{task.description.blank}")
+    @Size(max = 50, message = "{task.description.length}" )
     @Column(name = "description", nullable = false)
     private String description;
 
-    @NotNull(message = "Completed status cannot be null")
+    @NotNull(message = "{task.completed.status_is_null}")
     @Column(name = "completed", nullable = false)
-    private Boolean completed;
+    @Builder.Default
+    private Boolean completed = false;
 
-    @NotNull(message = "Task createdDate cannot be null")
+    @NotNull(message = "{task.created_date.is_null}")
     @Column(name = "created_date", nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdDate;

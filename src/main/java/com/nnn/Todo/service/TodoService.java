@@ -14,7 +14,7 @@ public interface TodoService {
 
     Task createTask(TaskPayload payload);
 
-    void markCompleted(Long id);
+    Task markCompleted(Long id);
 
     void deleteTask(Long id);
 

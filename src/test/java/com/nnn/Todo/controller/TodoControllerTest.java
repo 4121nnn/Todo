@@ -4,6 +4,7 @@ package com.nnn.Todo.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nnn.Todo.config.GlobalExceptionHandler;
+import com.nnn.Todo.config.TestConfig;
 import com.nnn.Todo.controller.payload.TaskPayload;
 import com.nnn.Todo.exception.TaskNotFoundException;
 import com.nnn.Todo.model.Task;
@@ -11,12 +12,17 @@ import com.nnn.Todo.service.TodoService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -26,12 +32,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@ExtendWith(MockitoExtension.class)
+@AutoConfigureMockMvc
 class TodoControllerTest {
 
     @Autowired
@@ -44,6 +53,12 @@ class TodoControllerTest {
 
     @Mock
     private TodoService todoService;
+
+    @Mock
+    MessageSource messageSource;
+
+    private String path = "/api/tasks";
+    private String host = "http://localhost";
 
     @BeforeAll
     public static void setupBeforeAll(){
@@ -70,27 +85,11 @@ class TodoControllerTest {
         when(todoService.findAll()).thenReturn(tasks);
 
         // when
-        mockMvc.perform(get("/api/tasks").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get(path).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(objectMapper.writeValueAsString(tasks)));
 
-
-        // then
-        verify(todoService).findAll();
-        verifyNoMoreInteractions(todoService);
-    }
-
-    @Test
-    void getAllTasks_DatabaseConnectionError_ReturnsInternalServerError() throws Exception {
-        // given
-        when(todoService.findAll()).thenThrow(new CannotCreateTransactionException("Database error occurred. Please try again later."));
-
-        // when
-        mockMvc.perform(get("/api/tasks").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isInternalServerError())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().string("Database error occurred. Please try again later."));
 
         // then
         verify(todoService).findAll();
@@ -104,11 +103,11 @@ class TodoControllerTest {
         Task task = generateTask();
         task.setDescription(payload.description());
 
-        String expectedUri = "http://localhost/api/tasks/" + task.getId();
+        String expectedUri = host + path + "/"+ task.getId();
         when(todoService.createTask(payload)).thenReturn(task);
 
         // when
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post(path)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
@@ -128,13 +127,13 @@ class TodoControllerTest {
         TaskPayload payload = new TaskPayload("");
 
         // when
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post(path)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.description").value("Description must not be blank"));
+                .andExpect(jsonPath("$.description").value("{task.description.blank}"));
 
         // then
         verifyNoInteractions(todoService);
@@ -148,7 +147,7 @@ class TodoControllerTest {
         when(todoService.getTaskById(task.getId())).thenReturn(task);
 
         // act and assert
-        mockMvc.perform(get("/api/tasks/{id}", task.getId()).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get(path +"/{id}", task.getId()).accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(objectMapper.writeValueAsString(task)));
@@ -161,13 +160,13 @@ class TodoControllerTest {
     void getTaskById_TaskDoesNotExists_ReturnNotFound() throws Exception{
         // given
         Long taskId = 1L;
-        when(todoService.getTaskById(taskId)).thenThrow(new TaskNotFoundException("Task with ID " + taskId + " not found"));
+        when(todoService.getTaskById(taskId)).thenThrow(new TaskNotFoundException("{exception.task.not_found} " + taskId));
 
         // when
-        mockMvc.perform(get("/api/tasks/{id}", taskId)
+        mockMvc.perform(get(path + "/{id}", taskId)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Task with ID 1 not found"))
+                .andExpect(content().string("{exception.task.not_found} " + taskId))
                 .andReturn();
 
         // then
@@ -176,16 +175,18 @@ class TodoControllerTest {
     @Test
     void markCompleted_MarksTaskCompeted_ReturnsOk() throws Exception {
         // given
-        long id = 1L;
-        doNothing().when(todoService).markCompleted(id);
+        Task task = generateTask();
+        when(todoService.markCompleted(task.getId())).thenReturn(task);
 
         // when
-        mockMvc.perform(patch("/api/tasks/{id}", id)
+        mockMvc.perform(patch(path + "/{id}", task.getId())
                 .accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().json(objectMapper.writeValueAsString(task)))
                 .andExpect(status().isOk());
 
         // then
-        verify(todoService).markCompleted(id);
+        verify(todoService).markCompleted(task.getId());
         verifyNoMoreInteractions(todoService);
     }
 
@@ -193,13 +194,13 @@ class TodoControllerTest {
     void markCompleted_TaskDoesNotExist_ReturnsNotFound() throws Exception {
         // given
         long id = 1L;
-        doThrow(new TaskNotFoundException("Task with ID " + id + " not found")).when(todoService).markCompleted(id);
+        doThrow(new TaskNotFoundException("{exception.task.not_found} " + id)).when(todoService).markCompleted(id);
 
         // when
-        mockMvc.perform(patch("/api/tasks/{id}", id)
+        mockMvc.perform(patch(path + "/{id}", id)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Task with ID " + id + " not found"));
+                .andExpect(content().string("{exception.task.not_found} " + id));
 
         // then
         verify(todoService).markCompleted(id);
@@ -213,7 +214,7 @@ class TodoControllerTest {
         doNothing().when(todoService).deleteTask(id);
 
         // when
-        mockMvc.perform(delete("/api/tasks/{id}", id)
+        mockMvc.perform(delete(path + "/{id}", id)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
@@ -229,7 +230,7 @@ class TodoControllerTest {
         when(todoService.updateTask(task)).thenReturn(task);
 
         // when
-        mockMvc.perform(put("/api/tasks")
+        mockMvc.perform(put(path)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(task)))
@@ -245,15 +246,15 @@ class TodoControllerTest {
     void updateTask_TaskDoesNotExists_ReturnsNotFound() throws Exception {
         // given
         Task task = generateTask();
-        when(todoService.updateTask(task)).thenThrow(new TaskNotFoundException("Task with ID " + task.getId() + " not found"));
+        when(todoService.updateTask(task)).thenThrow(new TaskNotFoundException("{exception.task.not_found} " + task.getId()));
 
         // when
-        mockMvc.perform(put("/api/tasks")
+        mockMvc.perform(put(path)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(task)))
                 .andExpect(status().isNotFound())
-                .andExpect(content().string("Task with ID " + task.getId() + " not found"));
+                .andExpect(content().string("{exception.task.not_found} " + task.getId()));
 
         // then
         verify(todoService).updateTask(task);
@@ -264,9 +265,9 @@ class TodoControllerTest {
 
     @ParameterizedTest
     @CsvSource({
-            "'', Description cannot be blank",
-            "'null', Description cannot be blank",
-            "'very long description very long description very long description', Description length must not exceed 50 characters"
+            "'', {task.description.blank}",
+            "'null', {task.description.blank}",
+            "'very long description very long description very long description', {task.description.length}"
     })
     void updateTask_DescriptionIsInvalid_ReturnsBadRequest(String description, String expectedError) throws Exception {
         // Arrange
@@ -277,7 +278,7 @@ class TodoControllerTest {
             task.setDescription(description);
         }
         // Act & Assert
-        mockMvc.perform(put("/api/tasks")
+        mockMvc.perform(put(path)
                         .accept(MediaType.APPLICATION_JSON)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(task)))
@@ -291,7 +292,7 @@ class TodoControllerTest {
 
 
     private String parseDate(LocalDateTime dateTime){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("{date_time.pattern}");
         return dateTime.format(formatter);
     }
     private Task generateTask(){

@@ -47,8 +47,8 @@ public class TodoController {
     }
 
     @PatchMapping("/{id}")
-    public void markCompleted(@PathVariable Long id){
-        todoService.markCompleted(id);
+    public ResponseEntity<Task> markCompleted(@PathVariable Long id){
+        return ResponseEntity.ok().body(todoService.markCompleted(id));
     }
 
     @DeleteMapping("/{id}")
