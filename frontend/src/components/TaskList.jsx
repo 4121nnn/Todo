@@ -75,7 +75,7 @@ function TaskList() {
                             onChange={() => handleTaskCheck(task.id)}
                             className={task.completed ? 'checked' : ''}
                         />
-                        {task.task}
+                        {task.description}
                         <span className='date'> {task.createdDate} </span>
                     </label>
                     <button onClick={() => buttonClickHandle(task.id)} className="settings-btn other-functions">

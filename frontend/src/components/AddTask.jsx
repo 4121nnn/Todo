@@ -16,10 +16,10 @@ function AddTask({ onTaskAdded }) {
             console.error('Task cannot be empty');
             return;  // Exit the function if the task is empty
         }
-        
+
         try{
             const response = await axios.post(BASE_URL, {
-                task: task
+                description: task
             });
             console.log('task added');
             setTask('');

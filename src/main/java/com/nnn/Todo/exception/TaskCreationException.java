@@ -1,0 +1,7 @@
+package com.nnn.Todo.exception;
+
+public class TaskCreationException extends RuntimeException{
+    public TaskCreationException(String message){
+        super(message);
+    }
+}

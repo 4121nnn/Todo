@@ -1,11 +1,15 @@
 package com.nnn.Todo.controller;
 
+import com.nnn.Todo.controller.payload.TaskPayload;
 import com.nnn.Todo.model.Task;
 import com.nnn.Todo.service.TodoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 
@@ -21,34 +25,39 @@ public class TodoController {
 
     @GetMapping
     public ResponseEntity<List<Task>> getAllTasks(){
-        List<Task> todoDTOs = todoService.findAll();
-
-        return ResponseEntity.ok(todoDTOs);
+        return ResponseEntity.ok(todoService.findAll());
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task){
-        Task createdTask = todoService.createTask(task);
-        return ResponseEntity.ok(createdTask);
+    public ResponseEntity<?> createTask(@Valid @RequestBody TaskPayload payload) throws Exception {
+        Task createdTask = todoService.createTask(payload);
+
+        String uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(createdTask.getId())
+                .toUriString();
+
+        return ResponseEntity.created(URI.create(uri)).body(createdTask);
+
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<Task> getById(@PathVariable Long id){
-        Task task = todoService.getTaskById(id);
-        return ResponseEntity.ok(task);
+    @GetMapping("/{id}")
+    public ResponseEntity<Task> getTaskById(@PathVariable Long id){
+        return ResponseEntity.ok(todoService.getTaskById(id));
     }
 
-    @PostMapping("{id}")
+    @PatchMapping("/{id}")
     public void markCompleted(@PathVariable Long id){
         todoService.markCompleted(id);
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public void deleteTask(@PathVariable Long id){
         todoService.deleteTask(id);
     }
-    @PostMapping("/update")
-    public ResponseEntity<Task> updateTask(@RequestBody Task task){
+
+    @PutMapping
+    public ResponseEntity<Task> updateTask(@Valid @RequestBody Task task){
         Task updatedTask = todoService.updateTask(task);
         return ResponseEntity.ok(task);
     }
